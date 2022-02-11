@@ -1,0 +1,58 @@
+{
+  "name": "node-contextual-logging",
+  "version": "0.1.0",
+  "description": "A simple project to demonstrate contextual logging and tracing with express and axios",
+  "main": "index.ts",
+  "repository": "https://github.com/sanderkoenders/node-contextual-logging",
+  "author": "Sander Koenders <sanderkoenders@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "serve": "NODE_ENV=development nodemon --exec 'ts-node' src/index.ts",
+    "start": "NODE_ENV=production node dist/index.js",
+    "test": "jest --watchAll",
+    "test:ci": "jest --ci",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint ./src --ext .ts"
+  },
+  "devDependencies": {
+    "@types/jest": "27.0.3",
+    "@typescript-eslint/eslint-plugin": "5.5.0",
+    "@typescript-eslint/parser": "5.5.0",
+    "eslint": "8.3.0",
+    "eslint-config-prettier": "8.3.0",
+    "eslint-plugin-prettier": "4.0.0",
+    "husky": "7.0.4",
+    "jest": "27.4.3",
+    "nodemon": "2.0.15",
+    "prettier": "2.5.0",
+    "ts-jest": "27.0.7",
+    "ts-node": "10.4.0",
+    "typescript": "4.5.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "./*.{js,ts}": [
+      "npx prettier --write",
+      "npm run lint"
+    ]
+  },
+  "jest": {
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "transform": {
+      "^.+\\.(ts)$": "ts-jest"
+    },
+    "globals": {
+      "ts-jest": {
+        "tsconfig": "tsconfig.json"
+      }
+    }
+  }
+}
