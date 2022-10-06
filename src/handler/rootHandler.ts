@@ -1,15 +1,37 @@
 import { Request, Response } from 'express';
 import { loggingContext } from '../lib/loggingContext';
+import axios, { AxiosResponse } from 'axios';
+
+const handleError = (res: Response) => (err: any) => {
+  loggingContext.error({
+    operation: 'Handle error',
+    data: err,
+  });
+
+  res.status(500).send({
+    error: 'something went wrong',
+  });
+};
+
+const handleSuccess = (res: Response) => (axiosResponse: AxiosResponse) => {
+  loggingContext.info({
+    operation: 'Sending response',
+    data: axiosResponse.data,
+  });
+
+  res.send(axiosResponse.data);
+};
 
 export const rootHandler = (req: Request, res: Response) => {
-  const responseObj = {
-    hello: 'world',
+  const requestConfig = {
+    url: 'http://127.0.0.1:3000/hello',
+    method: 'GET',
   };
 
   loggingContext.info({
-    operation: 'Sending response',
-    data: responseObj,
+    operation: 'Calling axios',
+    data: requestConfig,
   });
 
-  res.send(responseObj);
+  axios.request(requestConfig).then(handleSuccess(res)).catch(handleError(res));
 };
