@@ -2,6 +2,7 @@ import express from 'express';
 import { rootHandler } from './handler/rootHandler';
 import { loggingContext } from './lib/loggingContext';
 import { v4 as uuidv4 } from 'uuid';
+import { helloHandler } from './handler/helloHandler';
 
 const port = 3000;
 const app = express();
@@ -31,5 +32,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', rootHandler);
+
+app.get('/hello', helloHandler);
 
 app.listen(port, () => console.log(`Express server listening on port ${port}`));
