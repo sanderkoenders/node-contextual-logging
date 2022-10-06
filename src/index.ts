@@ -3,6 +3,7 @@ import { rootHandler } from './handler/rootHandler';
 import { loggingContext } from './lib/loggingContext';
 import { v4 as uuidv4 } from 'uuid';
 import { helloHandler } from './handler/helloHandler';
+import axios, { AxiosRequestConfig } from 'axios';
 
 const port = 3000;
 const app = express();
@@ -17,6 +18,14 @@ app.use((req, res, next) => {
     traceId,
     ipAddress,
   };
+
+  axios.interceptors.request.use((config: AxiosRequestConfig) => {
+    config.headers = config.headers ?? {};
+
+    config.headers['x-trace-id'] = traceId;
+
+    return config;
+  });
 
   loggingContext.init(context, next);
 });
