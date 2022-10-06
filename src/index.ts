@@ -9,10 +9,12 @@ const app = express();
 
 app.use((req, res, next) => {
   const requestId = uuidv4();
+  const traceId = (req.headers['x-trace-id'] ?? requestId) as string;
   const ipAddress = (req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '') as string;
 
   const context = {
     requestId,
+    traceId,
     ipAddress,
   };
 

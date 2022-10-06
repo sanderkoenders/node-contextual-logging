@@ -7,6 +7,7 @@ export interface ILogObj {
 
 export interface IContext {
   requestId: string;
+  traceId: string;
   ipAddress: string;
 }
 
