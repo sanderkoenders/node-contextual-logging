@@ -18,6 +18,18 @@ app.use((req, res, next) => {
   loggingContext.init(context, next);
 });
 
+app.use((req, res, next) => {
+  loggingContext.debug({
+    operation: 'Routing request',
+    data: {
+      path: req.path,
+      method: req.method,
+    },
+  });
+
+  next();
+});
+
 app.get('/', rootHandler);
 
 app.listen(port, () => console.log(`Express server listening on port ${port}`));
