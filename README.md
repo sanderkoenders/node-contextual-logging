@@ -236,7 +236,7 @@ Note how each request got its own `requestId` and `traceId` assigned even though
 
 ## Tracing requests across multiple services
 
-So now that we created a way to trace our requests within our application how do we go about tracing our requests across multiple services? Remember the `traceId` we added to our context? We can also use `traceId` to trace our requests across multiple services. How? Simply by passing them along with our outgoing requests! Let's use axios and add another middleware to our application.
+So now that we created a way to trace our requests within our application how do we go about tracing our requests across multiple services? Remember the `traceId` we added to our context? We can also use `traceId` to trace our requests across multiple services. How? Simply by passing them along with our outgoing requests! Let's use axios and add an axios interceptor to our application.
 
 ```typescript
 const port = 3000;
