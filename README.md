@@ -233,3 +233,134 @@ http.get('http://localhost:3000');
 ```
 
 Note how each request got its own `requestId` and `traceId` assigned even though the requests were handled at the same time. We now created a great way to keep track of the log messages scoped to a request.
+
+## Tracing requests across multiple services
+
+So now that we created a way to trace our requests within our application how do we go about tracing our requests across multiple services? Remember the `traceId` we added to our context? We can also use `traceId` to trace our requests across multiple services. How? Simply by passing them along with our outgoing requests! Let's use axios and add another middleware to our application.
+
+```typescript
+const port = 3000;
+const app = express();
+
+axios.interceptors.request.use((config: AxiosRequestConfig) => {
+  config.headers = config.headers ?? {};
+
+  config.headers['x-trace-id'] = loggingContext.getTraceId();
+
+  return config;
+});
+
+app.use((req, res, next) => {
+  const requestId = uuidv4();
+  const traceId = (req.headers['x-trace-id'] ?? requestId) as string;
+  const ipAddress = (req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '') as string;
+
+  const context = {
+    requestId,
+    traceId,
+    ipAddress,
+  };
+
+  loggingContext.init(context, next);
+});
+
+app.get('/', async (req, res) => {
+  const config: AxiosRequestConfig = {
+    method: 'GET',
+    url: `http://127.0.0.1:${port}/hello`,
+  };
+
+  loggingContext.log({
+    operation: 'Performing Axios request',
+    data: {
+      config,
+    },
+  });
+
+  axios
+    .request(config)
+    .then((res) => res.data)
+    .then(res.send);
+});
+
+app.get('/hello', (req, res) => {
+  const responseObj = {
+    hello: 'World',
+  };
+
+  loggingContext.log({
+    operation: 'About to send response',
+    data: {
+      endpoint: '/hello',
+      responseObj,
+    },
+  });
+
+  res.send(responseObj);
+});
+
+app.listen(port);
+
+http.get('http://localhost:3000');
+http.get('http://localhost:3000');
+
+// Output:
+// {
+//   "timeStamp": "2022-10-10T16:01:02.843Z",
+//   "requestId": "82c12c4c-57b2-413a-a94e-a1be6c1de693",
+//   "traceId": "82c12c4c-57b2-413a-a94e-a1be6c1de693",
+//   "ipAddress": "127.0.0.1",
+//   "operation": "Performing Axios request",
+//   "data": {
+//     "config": {
+//     "method": "GET",
+//     "url": "http://127.0.0.1:3000/hello"
+//     }
+//  }
+// }
+// {
+//   "timeStamp": "2022-10-10T16:01:02.851Z",
+//   "requestId": "294d8a9d-02a4-40f8-83dc-89a1769adeeb",
+//   "traceId": "294d8a9d-02a4-40f8-83dc-89a1769adeeb",
+//   "ipAddress": "127.0.0.1",
+//   "operation": "Performing Axios request",
+//   "data": {
+//     "config": {
+//     "method": "GET",
+//     "url": "http://127.0.0.1:3000/hello"
+//     }
+//   }
+// }
+// {
+//   "timeStamp": "2022-10-10T16:01:02.853Z",
+//   "requestId": "6a058dc8-fe15-4270-93e8-5f3e0622f3bd",
+//   "traceId": "82c12c4c-57b2-413a-a94e-a1be6c1de693",
+//   "ipAddress": "127.0.0.1",
+//   "operation": "About to send response",
+//   "data": {
+//     "endpoint": "/hello",
+//     "responseObj": {
+//     "hello": "World"
+//     }
+//   }
+// }
+// {
+//   "timeStamp": "2022-10-10T16:01:02.857Z",
+//   "requestId": "e59ec69a-c617-4350-85b5-7e8329e7ac0b",
+//   "traceId": "294d8a9d-02a4-40f8-83dc-89a1769adeeb",
+//   "ipAddress": "127.0.0.1",
+//   "operation": "About to send response",
+//   "data": {
+//     "endpoint": "/hello",
+//     "responseObj": {
+//     "hello": "World"
+//     }
+//   }
+// }
+```
+
+In the example above we added a axios interceptor, this interceptor uses the `getTraceId` method on `loggingContext` to get the `traceId` the context was initialized with. Whenever a request is send with Axios the interceptor is executed and `x-trace-id` is added to our request. The middleware we already had then ensures the `x-trace-id` is used in the `loggingContext`. The above example uses axios to send a request to `/hello` and you can see in the result that for each request the `requestId` changes but the different clients can still be traced through `traceId`.
+
+# Conclusion
+
+The introduction of the `async_hooks` module in NodeJS provided us with a great way to trace calls through the callstack in NodeJS. This helps us identify which log messages are associated with which request. This is a great solution to trace log messages throughout your environment without a lot of complexity or overhead.

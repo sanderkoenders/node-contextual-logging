@@ -3,9 +3,18 @@ import { loggingContext } from './lib/loggingContext';
 import { v4 as uuidv4 } from 'uuid';
 
 import http from 'node:http';
+import axios, { AxiosRequestConfig } from 'axios';
 
 const port = 3000;
 const app = express();
+
+axios.interceptors.request.use((config: AxiosRequestConfig) => {
+  config.headers = config.headers ?? {};
+
+  config.headers['x-trace-id'] = loggingContext.getTraceId();
+
+  return config;
+});
 
 app.use((req, res, next) => {
   const requestId = uuidv4();
@@ -21,24 +30,39 @@ app.use((req, res, next) => {
   loggingContext.init(context, next);
 });
 
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
+  const config: AxiosRequestConfig = {
+    method: 'GET',
+    url: `http://127.0.0.1:${port}/hello`,
+  };
+
   loggingContext.log({
-    operation: 'Received request on endpoint',
+    operation: 'Performing Axios request',
     data: {
-      endpoint: '/',
+      config,
     },
   });
 
-  const responseMsg = 'ok';
+  axios
+    .request(config)
+    .then((res) => res.data)
+    .then((data) => res.send(data));
+});
+
+app.get('/hello', (req, res) => {
+  const responseObj = {
+    hello: 'World',
+  };
 
   loggingContext.log({
     operation: 'About to send response',
     data: {
-      responseMsg,
+      endpoint: '/hello',
+      responseObj,
     },
   });
 
-  res.send(responseMsg);
+  res.send(responseObj);
 });
 
 app.listen(port);

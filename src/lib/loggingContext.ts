@@ -21,6 +21,8 @@ const LoggingContext = (transport: Pick<Console, 'log'>) => {
       });
     },
 
+    getTraceId: () => asyncLocalStorage.getStore()?.traceId,
+
     log: (logObj: ILogObj) => {
       const timeStamp = new Date().toISOString();
 
