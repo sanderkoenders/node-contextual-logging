@@ -1,9 +1,8 @@
 import express from 'express';
-import { rootHandler } from './handler/rootHandler';
 import { loggingContext } from './lib/loggingContext';
 import { v4 as uuidv4 } from 'uuid';
-import { helloHandler } from './handler/helloHandler';
-import axios, { AxiosRequestConfig } from 'axios';
+
+import http from 'node:http';
 
 const port = 3000;
 const app = express();
@@ -19,31 +18,30 @@ app.use((req, res, next) => {
     ipAddress,
   };
 
-  axios.interceptors.request.use((config: AxiosRequestConfig) => {
-    config.headers = config.headers ?? {};
-
-    config.headers['x-trace-id'] = traceId;
-
-    return config;
-  });
-
   loggingContext.init(context, next);
 });
 
-app.use((req, res, next) => {
-  loggingContext.debug({
-    operation: 'Routing request',
+app.get('/', (req, res) => {
+  loggingContext.log({
+    operation: 'Received request on endpoint',
     data: {
-      path: req.path,
-      method: req.method,
+      endpoint: '/',
     },
   });
 
-  next();
+  const responseMsg = 'ok';
+
+  loggingContext.log({
+    operation: 'About to send response',
+    data: {
+      responseMsg,
+    },
+  });
+
+  res.send(responseMsg);
 });
 
-app.get('/', rootHandler);
+app.listen(port);
 
-app.get('/hello', helloHandler);
-
-app.listen(port, () => console.log(`Express server listening on port ${port}`));
+http.get('http://localhost:3000');
+http.get('http://localhost:3000');
